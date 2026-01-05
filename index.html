@@ -2,279 +2,155 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PLFS Pro - Multi-File Dashboard</title>
-    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <title>PLFS 2026 | Admin Reports</title>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --primary: #0061a4; --bg: #f8fafc; --glass: rgba(255, 255, 255, 0.8);
-            --border: #e2e8f0; --text: #1e293b; --accent: #00bfa5;
-        }
-
-        body { 
-            font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; background: var(--bg);
-            display: flex; height: 100vh; color: var(--text); overflow: hidden;
-        }
-
-        /* Month Rail */
-        .month-rail { width: 80px; background: #0f172a; display: flex; flex-direction: column; padding: 10px 0; z-index: 100; }
-        .month-tab { 
-            padding: 18px 0; color: #94a3b8; cursor: pointer; text-align: center; 
-            font-size: 10px; font-weight: 800; transition: 0.3s; border-left: 4px solid transparent;
-        }
-        .month-tab.active { color: white; background: rgba(255,255,255,0.1); border-left-color: var(--primary); }
-
-        .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-
-        /* Enhanced Top Bar */
-        .top-bar {
-            height: 80px; background: var(--glass); backdrop-filter: blur(10px);
-            padding: 0 30px; display: flex; align-items: center; justify-content: space-between;
-            border-bottom: 1px solid var(--border); z-index: 50;
-        }
-
-        .stats-pill { 
-            background: #e0e7ff; color: #4338ca; padding: 6px 14px; 
-            border-radius: 20px; font-size: 12px; font-weight: 700; display: flex; gap: 10px;
-        }
-
-        /* Dashboard Layout */
-        .dashboard { display: flex; flex: 1; overflow: hidden; padding: 20px; gap: 20px; }
-        .pane { 
-            background: white; border-radius: 20px; border: 1px solid var(--border);
-            display: flex; flex-direction: column; transition: transform 0.3s;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-        }
-        .pane:hover { transform: translateY(-2px); }
-
-        .pane-fresh { width: 60%; }
-        .pane-rv { width: 40%; background: #fcfdfe; }
-
-        .header-strip { 
-            padding: 16px 24px; border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .header-strip h3 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); }
-
-        /* Tables */
-        .table-wrap { flex: 1; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th { 
-            background: #f8fafc; padding: 14px 20px; text-align: left; font-size: 11px; 
-            color: #64748b; font-weight: 700; position: sticky; top: 0; z-index: 5;
-        }
-        td { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-
-        /* Inputs */
-        input[type="date"], input[type="text"] {
-            border: 1.5px solid var(--border); padding: 8px 12px; border-radius: 10px;
-            font-size: 12px; outline: none; transition: 0.2s; width: 100%;
-        }
-        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,97,164,0.1); }
-
-        .btn-sync {
-            background: var(--primary); color: white; padding: 12px 24px; border-radius: 12px;
-            border: none; cursor: pointer; font-weight: 700; transition: 0.3s;
-        }
-        .btn-sync:hover { background: #004a7c; transform: scale(1.02); }
-
-        /* File Upload Area */
-        .upload-zone {
-            border: 2px dashed var(--primary); background: #f0f7ff;
-            padding: 10px 20px; border-radius: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px;
-        }
+        :root { --bg: #0d1117; --card: #161b22; --border: #30363d; --accent: #58a6ff; --text: #c9d1d9; --v1: #2ea043; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); padding: 30px; margin: 0; }
+        .admin-layout { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        h1, h2 { color: var(--accent); margin-top: 0; font-size: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { text-align: left; font-size: 11px; color: #8b949e; padding: 10px; border-bottom: 1px solid var(--border); }
+        td { padding: 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .btn { padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; background: var(--accent); color: #000; width: 100%; margin-bottom: 10px; }
+        .progress-bar { height: 8px; background: #30363d; border-radius: 10px; overflow: hidden; flex: 1; margin-right: 10px; }
+        .progress-fill { height: 100%; background: var(--v1); transition: 0.3s; }
     </style>
 </head>
 <body>
 
-    <div class="month-rail" id="monthRail"></div>
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
+    <h1>Operations Command Center</h1>
+    <button class="btn" style="width:auto" onclick="location.href='index.html'">Return to Roster</button>
+</div>
 
-    <div class="main">
-        <header class="top-bar">
-            <div>
-                <h1 style="margin:0; font-size: 22px; font-weight: 800; color: #0f172a;">PLFS Master Hub</h1>
-                <div id="monthDisplay" style="color: var(--primary); font-weight: 600;">January Operations</div>
-            </div>
-
-            <div style="display: flex; gap: 15px; align-items: center;">
-                <div class="stats-pill">
-                    <span id="totalCount">Units: 0</span>
-                    <span id="sroCount">SROs: 0</span>
-                </div>
-                
-                <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
-                    <span style="font-size: 20px;">📂</span>
-                    <span style="font-size: 12px; font-weight: 600;">Upload Multi-Files</span>
-                </div>
-                <input type="file" id="fileInput" multiple style="display:none" onchange="uploadFiles(this)">
-                
-                <button class="btn-sync" onclick="saveToCloud()">Sync To Cloud</button>
-            </div>
-        </header>
-
-        <div class="dashboard">
-            <section class="pane pane-fresh">
-                <div class="header-strip">
-                    <h3>1st Visit (Fresh)</h3>
-                    <select id="sroFilter" onchange="applyFilters()" style="border-radius: 8px; border: 1px solid var(--border); padding: 4px;">
-                        <option value="all">All SROs</option>
-                    </select>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr><th>FSU</th><th>Village/Town</th><th>Enumerator Name</th><th>Start Date</th><th>End Date</th></tr>
-                        </thead>
-                        <tbody id="freshBody"></tbody>
-                    </table>
-                </div>
-            </section>
-
-            <section class="pane pane-rv">
-                <div class="header-strip">
-                    <h3>Revisits (V2-V4)</h3>
-                    <div id="rvStats" style="font-size: 11px; font-weight: 700; color: #64748b;">0 Units</div>
-                </div>
-                <div class="table-wrap">
-                    <table>
-                        <thead>
-                            <tr><th>UID</th><th>Enumerator</th><th>Collection Date</th></tr>
-                        </thead>
-                        <tbody id="rvBody"></tbody>
-                    </table>
-                </div>
-            </section>
+<div class="admin-layout">
+    <div class="sidebar-tools">
+        <div class="card">
+            <h2>Import Data</h2>
+            <button class="btn" onclick="document.getElementById('xlRural').click()">+ Upload Rural Excel</button>
+            <button class="btn" onclick="document.getElementById('xlUrban').click()">+ Upload Urban Excel</button>
+            <input type="file" id="xlRural" hidden multiple onchange="handleExcel(this, 'Rural')">
+            <input type="file" id="xlUrban" hidden multiple onchange="handleExcel(this, 'Urban')">
+            <hr style="border:0; border-top:1px solid var(--border); margin:15px 0">
+            <button class="btn" style="background:var(--v1); color:white" onclick="syncCloud()">Push Local to Cloud</button>
+            <button class="btn" style="background:#f85149; color:white" onclick="wipeData()">Clear All Data</button>
+        </div>
+        
+        <div class="card">
+            <h2>Summary Stats</h2>
+            <div id="statsSummary" style="font-size: 14px; line-height: 2;"></div>
         </div>
     </div>
 
+    <div class="main-reports">
+        <div class="card">
+            <h2>State-wise Target vs Assigned</h2>
+            <canvas id="mainChart" style="max-height: 300px;"></canvas>
+        </div>
+
+        <div class="card">
+            <h2>Hierarchy Progress (RO > SRO)</h2>
+            <table>
+                <thead>
+                    <tr><th>Region / SRO</th><th>Target</th><th>Assigned</th><th>Progress</th></tr>
+                </thead>
+                <tbody id="progressTable"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI",
-        authDomain: "action-plan-62fae.firebaseapp.com",
-        databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com",
-        projectId: "action-plan-62fae"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
-    
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    let masterData = [];
-    let selectedMonth = new Date().getMonth();
+    const config = { apiKey: "AIzaSyB6fQ8n4qyG-TfVdAqWtDped17bMYTZSgI", authDomain: "action-plan-62fae.firebaseapp.com", databaseURL: "https://action-plan-62fae-default-rtdb.firebaseio.com", projectId: "action-plan-62fae" };
+    firebase.initializeApp(config);
+    const db = firebase.database();
 
-    // Init Rail
-    const rail = document.getElementById('monthRail');
-    months.forEach((m, i) => {
-        rail.innerHTML += `<div class="month-tab ${i === selectedMonth ? 'active' : ''}" onclick="changeMonth(${i})">${m.substring(0,3).toUpperCase()}</div>`;
-    });
+    let master = JSON.parse(localStorage.getItem('plfs_master')) || [];
+    let myChart = null;
 
-    async function uploadFiles(input) {
-        if (!input.files.length) return;
-        
-        let allSros = new Set();
-        
-        for (let file of input.files) {
-            const buffer = await file.arrayBuffer();
-            const raw = XLSX.utils.sheet_to_json(XLSX.read(buffer).Sheets[XLSX.read(buffer).SheetNames[0]], {range: 7});
-            
-            raw.forEach(r => {
-                if (!r.FSU) return;
-                const sro = String(r['SRO [Code]'] || 'N/A').replace(/\[.*?\]/g, "").trim();
-                allSros.add(sro);
-                const baseMonth = (parseInt(String(r['Month [Qtr]']).match(/\d+/)) - 1) % 12;
+    function runReports() {
+        const table = document.getElementById('progressTable');
+        const stats = document.getElementById('statsSummary');
+        const reportData = {};
+        let total = master.length, done = 0;
 
-                for (let v = 1; v <= 4; v++) {
-                    masterData.push({
-                        uid: `${r.FSU}-V${v}`, fsu: r.FSU, visit: v, sro: sro,
-                        monthIdx: (baseMonth + (v - 1)) % 12,
-                        village: String(r['Village[Code]'] || r['Town [Code]'] || 'N/A').replace(/\[.*?\]/g, "").trim(),
-                        enumerator: "", startDate: "", endDate: "", collectionDate: ""
-                    });
+        master.forEach(d => {
+            const key = `${d.state} - ${d.sro}`;
+            if(!reportData[key]) reportData[key] = { total: 0, done: 0 };
+            reportData[key].total++; 
+            if(d.date) { reportData[key].done++; done++; }
+        });
+
+        stats.innerHTML = `Total FSUs: <b>${total}</b><br>Assigned: <b>${done}</b><br>Pending: <b>${total - done}</b>`;
+
+        table.innerHTML = Object.keys(reportData).sort().map(k => {
+            const p = Math.round((reportData[k].done/reportData[k].total)*100) || 0;
+            return `<tr><td><b>${k}</b></td><td>${reportData[k].total}</td><td>${reportData[k].done}</td><td style="display:flex; align-items:center"><div class="progress-bar"><div class="progress-fill" style="width:${p}%"></div></div>${p}%</td></tr>`;
+        }).join('');
+
+        updateChart();
+    }
+
+    function updateChart() {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        const states = [...new Set(master.map(m => m.state))];
+        const assigned = states.map(s => master.filter(m => m.state === s && m.date).length);
+        const total = states.map(s => master.filter(m => m.state === s).length);
+
+        if(myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: states,
+                datasets: [
+                    { label: 'Assigned', data: assigned, backgroundColor: '#58a6ff' },
+                    { label: 'Remaining', data: total.map((t,i) => t - assigned[i]), backgroundColor: '#30363d' }
+                ]
+            },
+            options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true } } }
+        });
+    }
+
+    async function handleExcel(input, sector) {
+        const files = Array.from(input.files);
+        for(let file of files) {
+            let state = file.name.split('.')[0].split('_').pop().trim();
+            const data = new Uint8Array(await file.arrayBuffer());
+            const rows = XLSX.utils.sheet_to_json(XLSX.read(data, {type:'array'}).Sheets[XLSX.read(data, {type:'array'}).SheetNames[0]], {header:1, range:7});
+            rows.slice(1).forEach(cols => {
+                let fsu, mCode, sro, loc;
+                if(sector === 'Urban') { fsu=cols[3]; mCode=cols[4]; sro=cols[5]; loc=cols[8]; }
+                else { fsu=cols[4]; mCode=cols[5]; sro=cols[6]; loc=cols[10]; }
+                if(fsu) {
+                    const startMonth = (parseInt(mCode) >= 13) ? (parseInt(mCode) - 13) : (parseInt(mCode)-1);
+                    for(let i = 0; i < 4; i++) {
+                        let curMonth = (startMonth + i) % 12;
+                        let uid = `${state}_${fsu}_M${curMonth}_V${i+1}`;
+                        if(!master.find(m => m.uid === uid)) master.push({ uid, fsu, state, sector, sro: String(sro).toUpperCase(), monthIdx: curMonth, location: loc || "---", enumerator: "", visitNum: i+1 });
+                    }
                 }
             });
         }
-
-        const sroSelect = document.getElementById('sroFilter');
-        sroSelect.innerHTML = '<option value="all">All SROs</option>';
-        Array.from(allSros).sort().forEach(s => sroSelect.innerHTML += `<option value="${s}">${s}</option>`);
-        
-        document.getElementById('sroCount').innerText = `SROs: ${allSros.size}`;
-        applyFilters();
+        localStorage.setItem('plfs_master', JSON.stringify(master));
+        runReports();
     }
 
-    function changeMonth(idx) {
-        selectedMonth = idx;
-        document.querySelectorAll('.month-tab').forEach((t, i) => t.className = `month-tab ${i === idx ? 'active' : ''}`);
-        applyFilters();
+    async function syncCloud() {
+        const grouped = {};
+        master.forEach(item => { if (!grouped[item.state]) grouped[item.state] = {}; grouped[item.state][item.uid] = item; });
+        await db.ref(`plfs_roster`).update(grouped);
+        alert("Cloud updated successfully.");
     }
 
-    function applyFilters() {
-        document.getElementById('monthDisplay').innerText = months[selectedMonth] + " Operations";
-        const sro = document.getElementById('sroFilter').value;
-        const filtered = masterData.filter(d => d.monthIdx === selectedMonth && (sro === 'all' || d.sro === sro));
-        render(filtered);
-    }
-
-    function render(data) {
-        const fBody = document.getElementById('freshBody');
-        const rBody = document.getElementById('rvBody');
-        fBody.innerHTML = ""; rBody.innerHTML = "";
-
-        const fList = data.filter(d => d.visit === 1);
-        const rList = data.filter(d => d.visit > 1);
-
-        document.getElementById('totalCount').innerText = `Units: ${data.length}`;
-        document.getElementById('rvStats').innerText = `${rList.length} Units`;
-
-        fList.forEach(d => {
-            fBody.innerHTML += `<tr>
-                <td><b>${d.fsu}</b></td><td>${d.village}</td>
-                <td><input type="text" value="${d.enumerator}" placeholder="Assign" onchange="autoFill('${d.fsu}', this.value)"></td>
-                <td><input type="date" value="${d.startDate}" onchange="smartDate('${d.uid}', this.value)"></td>
-                <td><input type="date" value="${d.endDate}" id="end-${d.uid}" onchange="updateVal('${d.uid}', 'endDate', this.value)"></td>
-            </tr>`;
-        });
-
-        rList.forEach(d => {
-            rBody.innerHTML += `<tr>
-                <td>${d.uid}</td>
-                <td id="e-${d.uid}" style="font-weight:700; color:var(--primary);">${d.enumerator || '--'}</td>
-                <td><input type="date" value="${d.collectionDate}" onchange="updateVal('${d.uid}', 'collectionDate', this.value)"></td>
-            </tr>`;
-        });
-    }
-
-    function autoFill(fsu, name) {
-        masterData.forEach(item => { 
-            if (item.fsu === fsu) { 
-                item.enumerator = name; 
-                const cell = document.getElementById(`e-${item.uid}`);
-                if (cell) cell.innerText = name;
-            } 
-        });
-    }
-
-    function smartDate(uid, start) {
-        const item = masterData.find(d => d.uid === uid);
-        if (item) {
-            item.startDate = start;
-            if (start) {
-                let d = new Date(start); d.setDate(d.getDate() + 5);
-                item.endDate = d.toISOString().split('T')[0];
-                const endInp = document.getElementById(`end-${uid}`); if (endInp) endInp.value = item.endDate;
-            }
-        }
-    }
-
-    function updateVal(uid, key, val) { const item = masterData.find(d => d.uid === uid); if (item) item[key] = val; }
-
-    async function saveToCloud() {
-        if (!masterData.length) return;
-        await database.ref('plfs_roster/Himachal').set(masterData);
-        alert("Success: All files merged and synced!");
-    }
+    function wipeData() { if(confirm("Permanently delete all data?")) { localStorage.clear(); location.reload(); } }
+    
+    runReports();
 </script>
 </body>
 </html>
